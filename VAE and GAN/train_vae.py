@@ -1,3 +1,7 @@
+"""
+This code is taken from:https://github.com/dpernes/vae
+
+"""
 import torch
 from torch import nn
 from torch import optim
@@ -86,20 +90,9 @@ def train(vae,optimizer, train_loader, n_epochs,image_save_file,kl_weight=1e-4,
             Xrec,z_mean,z_logvar = vae(data)
 
             # loss, backward pass and optimization step
-            """
-            if epoch<30:
-                kl_weight=1e-6
-            elif epoch<60:
-                kl_weight=1e-4
-            elif epoch>90:
-                kl_weight=1e-3
-            """
-
-
 
             loss, reconst_loss, kl_loss = vae_loss(Xrec, data, z_mean, z_logvar,
                                                    kl_weight=kl_weight)
-
 
             loss.backward()
 
@@ -151,27 +144,9 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                 SetRange])
 
 
-"""
-dataset = ImgDataset(args.data_path, transform=transform)
-
-# create data indices for training and validation splits
-dataset_size = len(dataset)  # number of samples in training + validation sets
-indices = list(range(dataset_size))
-split = int(np.floor(args.valid_split * dataset_size))  # samples in valid. set
-np.random.shuffle(indices)
-train_indices, valid_indices = indices[split:], indices[:split]
-
-train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_indices)
-valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(valid_indices)
-"""
-
-
-#ls -Q img_align_celeba | head -20000 | xargs -i mv img_align_celeba/{} val/
 
 data_dir="../../img_celeba"
 #data_dir="../../Processed_data/Olulu_Casia_vae"
-
-
 
 train_loader = torch.utils.data.DataLoader(datasets.ImageFolder(os.path.join(data_dir, "train"),
                transform=transform), batch_size=args.batch_size,
@@ -200,7 +175,6 @@ vae.load_state_dict(checkpoint)
 print(vae)
 
 
-#https://github.com/bhpfelix/Variational-Autoencoder-PyTorch
 
 optimizer = optim.Adam(vae.parameters(),
                        lr=1e-4,
