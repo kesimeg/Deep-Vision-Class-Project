@@ -1,3 +1,8 @@
+"""
+This  code uses only landmark data. 
+Some transform functions are based on the transforms given in Pytorch tutorials:
+https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
+"""
 from __future__ import print_function, division
 import torch
 import torch.nn as nn
@@ -20,7 +25,6 @@ from skimage import io, transform
 from torch.utils.data import Dataset, DataLoader
 
 
-#data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three_augmented'
 data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three'
 
 
@@ -67,40 +71,6 @@ class Rescale(object):
 
         return {'image': img, 'landmarks': landmarks,"label": label}
 
-"""
-class RandomCrop(object):
-    #Crop randomly the image in a sample.
-
-    #Args:
-    #    output_size (tuple or int): Desired output size. If int, square crop
-    #        is made.
-
-
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        if isinstance(output_size, int):
-            self.output_size = (output_size, output_size)
-        else:
-            assert len(output_size) == 2
-            self.output_size = output_size
-
-    def __call__(self, sample):
-        image, landmarks = sample['image'], sample['landmarks']
-
-        h, w = image.shape[:2]
-        new_h, new_w = self.output_size
-
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
-
-        image = image[top: top + new_h,
-                      left: left + new_w]
-
-        landmarks = landmarks - [left, top]
-
-        return {'image': image, 'landmarks': landmarks}
-
-"""
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
@@ -176,21 +146,6 @@ def show_landmarks_batch(sample_batched):
                     s=10, marker='.', c='r')
 
         plt.title('Batch from dataloader')
-"""
-for i_batch, sample_batched in enumerate(dataloader):
-    print(i_batch, sample_batched['image'].size(),
-          sample_batched['landmarks'].size())
-
-    # observe 4th batch and stop.
-    if i_batch == 3:
-        plt.figure()
-        show_landmarks_batch(sample_batched)
-        plt.axis('off')
-        plt.ioff()
-        plt.show()
-        break
-"""
-
 
 class random_noise(object):
     def __call__(self, sample):
@@ -248,36 +203,11 @@ class Net(nn.Module):
         nn.Linear(512, 512),
         nn.ReLU(),
         nn.Linear(512, 6))
-        """
-
-
-        self.l1= nn.Sequential(
-        nn.Linear(68*2, 512),
-        nn.ReLU(),
-        nn.BatchNorm1d(512),
-        nn.Dropout(0.7))
-        self.l2=nn.Sequential(
-        nn.Linear(512, 512),
-        nn.ReLU(),
-        nn.BatchNorm1d(512),
-        )
-        self.l3=nn.Sequential(
-        nn.Linear(512, 512),
-        nn.ReLU(),
-        nn.BatchNorm1d(512))
-        self.l4=nn.Linear(512, 6)
-        """
-
+        
     def forward(self,landmark):
 
 
         out = self.landmark_linear(landmark.view(-1,68*2))
-        """
-        out=self.l1(landmark.view(-1,68*2))
-        out=self.l2(out)+out
-        out=self.l3(out)+out
-        out=self.l4(out)
-        """
         return out
 
 def weights_init(m):
@@ -305,16 +235,6 @@ dataset_train5,dataset_train6,dataset_train7])
 
 
 
-
-"""
-dataset_train = FaceLandmarksDataset(csv_file='Landmark_data/Set0.csv',
-                                           root_dir='data/faces/',
-                                           transform=transforms.Compose([
-                                               Rescale(160),
-                                              # RandomCrop(224),
-                                               ToTensor()
-                                           ]))
-"""
 dataset_valid = FaceLandmarksDataset(csv_file='Landmark_data/Set8.csv',
                                            root_dir='data/faces/',
                                            transform=transform_var)
@@ -377,22 +297,17 @@ for i_batch, sample_batched in enumerate(train_loader):
 def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
     since = time.time()
 
-    #best_model_wts = copy.deepcopy(model.state_dict())
     my_file=open(plot_file, "a")
 
 
     pbar=tqdm(range(checkp_epoch,num_epochs))
     for epoch in pbar:
-        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        #print('-' * 10)
 
-        # Each epoch has a training and validation phase
-        model.train()  # Set model to training mode
+        model.train()  
 
         running_loss = 0.0
         running_corrects = 0
 
-        # Iterate over data.
         for sample in train_loader:
             inputs = sample["image"]
             labels = sample["label"]
@@ -402,11 +317,9 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
             inputs = inputs.to(device)
             labels = labels.to(device)
             landmarks = landmarks.to(device)
-            # zero the parameter gradients
+
             optimizer.zero_grad()
 
-            # forward
-            # track history if only in train
             with torch.set_grad_enabled(True):
 
                 outputs = model(landmarks)
@@ -417,16 +330,14 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 loss.backward()
                 optimizer.step()
 
-            # statistics
+
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
         train_loss = running_loss / train_set_size
         train_acc = running_corrects.double() / train_set_size
 
-            #print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-            #    phase, epoch_loss, epoch_acc))
-        model.eval()   # Set model to evaluate mode
+        model.eval()   
 
         running_loss = 0.0
         running_corrects = 0
@@ -440,14 +351,12 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 landmarks = landmarks.to(device)
-                # forward
-                # track history if only in train
+
                 with torch.set_grad_enabled(False):
                     outputs = model(landmarks)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
-                # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
@@ -476,9 +385,6 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
 
-
-    # load best model weights
-
     return model
 
 
@@ -488,9 +394,7 @@ model_ft.apply(weights_init)
 
 criterion = nn.CrossEntropyLoss()
 
-# Observe that all parameters are being optimized
-
-optimizer_ft = optim.Adam(model_ft.parameters(),lr=2*1e-4)#,weight_decay=0.015)#0.00002
+optimizer_ft = optim.Adam(model_ft.parameters(),lr=2*1e-4)
 
 
 # Decay LR by a factor of 0.1 every 7 epochs
