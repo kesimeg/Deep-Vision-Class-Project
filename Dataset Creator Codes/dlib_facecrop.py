@@ -1,3 +1,6 @@
+"""
+Face crop and and eye alingment code
+"""
 import cv2
 import numpy as np
 import dlib
@@ -8,7 +11,7 @@ import scipy.ndimage
 
 import data_augment
 
-def align_face(image,landmarks): #aling face
+def align_face(image,landmarks): 
 
     left_eye_range=range(36, 42)
     right_eye_range=range(42, 48)
@@ -38,8 +41,7 @@ def align_face(image,landmarks): #aling face
     dY = eye1_center[1] - eye2_center[1]
     dX = eye1_center[0] - eye2_center[0]
     angle = np.degrees(np.arctan2(dY, dX)) - 180
-    #print(angle)
-    #if abs(angle)<20:
+
     rotated=scipy.ndimage.interpolation.rotate(image,angle)
 
     return rotated
@@ -53,7 +55,7 @@ def face_recog(img):
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     face = detector(gray)
-    #print(face)
+    
     if len(face)==0:
         return img,False
     else:
@@ -81,47 +83,3 @@ def face_recog(img):
             cropped_img=rotated[y1-10:y2+10,x1-10:x2+10]
 
             return cropped_img,True
-
-"""
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-faces = detector(gray)
-for face in faces:
-    x1 = face.left()
-    y1 = face.top()
-    x2 = face.right()
-    y2 = face.bottom()
-    #cv2.rectangle(img, (x1, y1), (x2, y2),(0, 255, 0),3)
-
-landmarks = predictor(gray, face)
-
-
-left_eye_range=range(36, 42)
-right_eye_range=range(42, 48)
-
-for n in right_eye_range:
-    x = landmarks.part(n).x
-    y = landmarks.part(n).y
-    #cv2.circle(img, (x, y), 4, (255, 0, 0), -1)
-
-cropped_img=img[y1:y2,x1:x2]
-
-plt.imshow(cropped_img)
-plt.show()
-"""
-
-
-"""
-img = cv2.imread('024.jpeg')
-img,_=face_recog(img)
-plt.imshow(img)
-plt.show()
-
-img_aug=data_augment.augment(img,5)
-
-for image in img_aug:
-    plt.imshow(image)
-    plt.show()
-"""
