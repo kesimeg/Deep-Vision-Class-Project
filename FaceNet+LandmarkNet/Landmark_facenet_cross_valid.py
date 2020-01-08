@@ -1,3 +1,8 @@
+"""
+This code uses both images and facial landmarks for training. Cross validation is used
+FaceNet model code is taken from:
+https://github.com/timesler/facenet-pytorch
+"""
 from __future__ import print_function, division
 from facenet_pytorch import MTCNN, fixed_image_standardization
 from inception_resnet_v1 import InceptionResnetV1
@@ -21,8 +26,6 @@ import matplotlib.pyplot as plt
 from skimage import io, transform
 from torch.utils.data import Dataset, DataLoader
 
-
-#data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three_augmented'
 data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three'
 
 np.random.seed(20)
@@ -70,41 +73,7 @@ class Rescale(object):
         landmarks = landmarks * [new_w / w, new_h / h]
 
         return {'image': img, 'landmarks': landmarks,"label": label}
-
-"""
-class RandomCrop(object):
-    #Crop randomly the image in a sample.
-
-    #Args:
-    #    output_size (tuple or int): Desired output size. If int, square crop
-    #        is made.
-
-
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        if isinstance(output_size, int):
-            self.output_size = (output_size, output_size)
-        else:
-            assert len(output_size) == 2
-            self.output_size = output_size
-
-    def __call__(self, sample):
-        image, landmarks = sample['image'], sample['landmarks']
-
-        h, w = image.shape[:2]
-        new_h, new_w = self.output_size
-
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
-
-        image = image[top: top + new_h,
-                      left: left + new_w]
-
-        landmarks = landmarks - [left, top]
-
-        return {'image': image, 'landmarks': landmarks}
-
-"""
+    
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
@@ -264,17 +233,11 @@ class Net(nn.Module):
 
         self.decision_weight=0.6#nn.Linear(1,1)#nn.Parameter(torch.Tensor([0.4]))
 
-        #self.classify =nn.Linear(12, 6)
-
-
 
     def forward(self, img,landmark,epoch):
         out1=self.inception_resnet(img)
 
         out2 = self.landmark_linear(landmark.view(-1,68*2))
-
-        #out2 = F.relu(out2) #torch.cat((out1, out2), 1)
-        #out2 = self.classify(out2)
         out2=out2*(1-self.decision_weight) +out1*self.decision_weight
         return out2
 
@@ -292,20 +255,6 @@ dataset_train7=dataset_train = FaceLandmarksDataset(csv_file='Landmark_data/Set7
 dataset_train8=dataset_train = FaceLandmarksDataset(csv_file='Landmark_data/Set8.csv',root_dir='data/faces/',transform=transform_var)
 
 #https://pytorch.org/docs/master/data.html#torch.utils.data.ConcatDataset
-
-
-
-
-"""
-dataset_train = FaceLandmarksDataset(csv_file='Landmark_data/Set0.csv',
-                                           root_dir='data/faces/',
-                                           transform=transforms.Compose([
-                                               Rescale(160),
-                                              # RandomCrop(224),
-                                               ToTensor()
-                                           ]))
-"""
-
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # checks if there is gpu available
@@ -330,22 +279,18 @@ def imshow(inp, title=None):
 def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
     since = time.time()
 
-    #best_model_wts = copy.deepcopy(model.state_dict())
     my_file=open(plot_file, "a")
 
 
     pbar=tqdm(range(checkp_epoch,num_epochs))
     for epoch in pbar:
-        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        #print('-' * 10)
-
-        # Each epoch has a training and validation phase
-        model.train()  # Set model to training mode
+      
+        model.train()  
 
         running_loss = 0.0
         running_corrects = 0
 
-        # Iterate over data.
+      
         for sample in train_loader:
             inputs = sample["image"]
             labels = sample["label"]
@@ -355,11 +300,9 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
             inputs = inputs.to(device)
             labels = labels.to(device)
             landmarks = landmarks.to(device)
-            # zero the parameter gradients
+            
             optimizer.zero_grad()
 
-            # forward
-            # track history if only in train
             with torch.set_grad_enabled(True):
 
                 outputs = model(inputs,landmarks,epoch)
@@ -370,15 +313,13 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 loss.backward()
                 optimizer.step()
 
-            # statistics
+            
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
         train_loss = running_loss / train_set_size
         train_acc = running_corrects.double() / train_set_size
 
-            #print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-            #    phase, epoch_loss, epoch_acc))
         model.eval()   # Set model to evaluate mode
 
         running_loss = 0.0
@@ -393,14 +334,13 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 landmarks = landmarks.to(device)
-                # forward
-                # track history if only in train
+
                 with torch.set_grad_enabled(False):
                     outputs = model(inputs,landmarks,epoch)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
-                # statistics
+                
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
@@ -428,9 +368,6 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-
-
-    # load best model weights
 
     return model,val_acc,train_acc
 
@@ -475,7 +412,6 @@ for i in range(0,len(data_set_list)):
 
     criterion = nn.CrossEntropyLoss()
 
-    # Observe that all parameters are being optimized
 
     #optimizer_ft = optim.Adam(model_ft.parameters(),lr=1e-4)#,weight_decay=0.005)#0.00002
 
@@ -486,8 +422,6 @@ for i in range(0,len(data_set_list)):
                 ], lr=0.00002,weight_decay=0.1)
 
     criterion = nn.CrossEntropyLoss()
-
-    # Observe that all parameters are being optimized
 
 
     train_set_size = len(dataset_train)
