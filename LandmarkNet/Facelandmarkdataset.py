@@ -1,3 +1,8 @@
+"""
+This is the dataloader used to load images, class id's and landmarks
+This code is taken from Pytorch tutorials:
+https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
+"""
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
