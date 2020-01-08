@@ -1,3 +1,8 @@
+"""
+
+This code turns the dataset in to sub sets. These sets are in the format which Pytorch ImageFolder uses
+
+"""
 from dlib_facecrop import face_recog
 import numpy as np
 import os
@@ -34,7 +39,6 @@ for element in pbar:
         #print(single_class_files)
         last_num_elements=single_class_files[-3:len(single_class_files)]
         i=0
-        #print(class_elem)
         for image in last_num_elements:
              i+=1
              full_image_path=os.path.join(single_class, image)
@@ -51,28 +55,3 @@ for element in pbar:
     set_num+=1
     print(set_num)
 
-
-"""
-for element in class_files:
-    image_path=path_name+"/"+element
-    files=os.listdir(image_path)
-    files.sort()
-    for image_name in files:
-
-        full_image_path=image_path+"/"+image_name
-        image=cv2.imread(full_image_path,0)
-        #print(full_image_path)
-        image=face_recog(image)
-        if type(image)!=type(None):
-            aug=data_augment.augment(image,number_of_copies,72)
-
-            for i in range(0,number_of_copies):
-                #cv2.imwrite("./ege3.tiff",aug[0][3]*255)
-
-
-
-                name=image_name.split(".jpeg")
-                    #print("./Casia_process/processed/"+element+"/"+name[0]+"_"+str(i)+".jpeg",type(image))#,image*255)
-                cv2.imwrite("./Olulu-Casia_one_subject_augment/processed/"+element+"/"+name[0]+"_"+str(i)+".jpeg",aug[0][i]*255) #has to be converted to 0-255
-                cv2.imwrite("./Olulu-Casia_one_subject_augment/lbp/"+element+"/"+name[0]+"_"+str(i)+".jpeg",aug[1][i]*255)
-"""
