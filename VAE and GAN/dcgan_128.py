@@ -61,15 +61,10 @@ noise=transforms.Lambda(lambda x: x + torch.rand(x.shape))
 
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                #transforms.RandomAffine(0,scale=(1.3,2)),
-                                #transforms.CenterCrop(200),
                                 transforms.Resize((128,
                                                    128)),
                                 transforms.ToTensor(),
-
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                                #transforms.RandomApply([noise],p=0.5)
-                                #transforms.RandomApply(noise, p=0.5)# rastgele bazen yapsın
                                 ])
 
 
@@ -98,48 +93,6 @@ def weights_init(m):
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
-
-#https://towardsdatascience.com/10-lessons-i-learned-training-generative-adversarial-networks-gans-for-a-year-c9071159628
-"""
-class Generator(nn.Module):
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            nn.ConvTranspose2d(     nz, ngf * 8, 4, 1, 0, bias=False),
-            nn.BatchNorm2d(ngf * 8),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4
-            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*4) x 8 x 8
-            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d(ngf * 2,     ngf, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-
-            nn.ConvTranspose2d(    ngf,      ngf, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-
-            nn.ConvTranspose2d(ngf,     3, 4, 2, 1, bias=False),
-            nn.Tanh()
-            # state size. (nc) x 64 x 64
-        )
-
-    def forward(self, input):
-        if input.is_cuda and self.ngpu > 1:
-            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-        else:
-            output = self.main(input)
-        return output
-"""
 
 class Generator(nn.Module):
     def __init__(self, latent_dim):
@@ -213,20 +166,6 @@ class Generator(nn.Module):
             # state size. (nc) x 64 x 64
         )
         self.upsample=nn.Upsample(scale_factor=2)
-        """
-        self.param_init()
-
-    def param_init(self):
-        '''Parameters initialization.'''
-        for layer in self.modules():
-            if hasattr(layer, 'weight'):
-                if isinstance(layer, (nn.BatchNorm1d, nn.BatchNorm2d)):
-                    nn.init.normal_(layer.weight, mean=1., std=0.02)
-                else:
-                    nn.init.xavier_normal_(layer.weight)
-            if hasattr(layer, 'bias'):
-                nn.init.constant_(layer.bias, 0.)
-        """
     def forward(self, input):
             #print("decoder input",input.shape)
 
@@ -255,10 +194,6 @@ netG.apply(weights_init)
 if opt.netG != '':
     netG.load_state_dict(torch.load(opt.netG))
 print(netG)
-
-#netG.load_state_dict(torch.load("netG_epoch_149_continue2.pth"))
-
-#torch.save(netG.main.state_dict(), 'netG_epoch_149_continue2.pt')
 
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
@@ -328,8 +263,6 @@ for epoch in range(opt.niter):
         batch_size = real_cpu.size(0)
         label = torch.full((batch_size,), real_label, device=device)
 
-        #label[np.random.randint(batch_size,size=(batch_size//20))]=fake_label
-
         output = netD(real_cpu)
         errD_real = criterion(output, label)
         errD_real.backward()
@@ -339,7 +272,7 @@ for epoch in range(opt.niter):
         noise = torch.randn(batch_size, nz, 1, 1, device=device)
         fake = netG(noise)
         label.fill_(fake_label)
-        #label[np.random.randint(batch_size,size=(batch_size//20))]=real_label
+
         output = netD(fake.detach())
         errD_fake = criterion(output, label)
         errD_fake.backward()
