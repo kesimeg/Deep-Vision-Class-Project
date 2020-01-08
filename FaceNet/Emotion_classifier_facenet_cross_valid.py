@@ -1,3 +1,11 @@
+"""
+This code trains on dataset generated with dataset creator code.
+This code does 9-fold cross validation on the dataset and writes the accuracy and loss values in to cvs file.
+FaceNet model is used
+Code and facenet model is taken from the following repository:
+https://github.com/timesler/facenet-pytorch
+"""
+
 from __future__ import print_function, division
 from facenet_pytorch import MTCNN, fixed_image_standardization
 from inception_resnet_v1 import InceptionResnetV1
@@ -16,22 +24,8 @@ import torch.nn.functional as F
 import pandas as pd
 from tqdm import tqdm
 from datetime  import datetime
-"""
-def __init__(self):
-        super(EncoderCNN, self).__init__()
-        self.vgg = models.vgg16()
-        self.vgg.load_state_dict(torch.load(vgg_checkpoint))
-        self.vgg.features = nn.Sequential(
-            *(self.vgg.features[i] for i in range(30))
 
-    def forward(self, images):
-        return self.vgg.feature(images)
-"""
-#plt.ion()
-# Data augmentation and normalization for training
-# Just normalization for validation
 
-#data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three_augmented'
 data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three'
 
 
@@ -54,30 +48,15 @@ class illumination_change(object):
         return image/div
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                #transforms.RandomAffine(0,scale=(1.3,2)),
-                                #transforms.CenterCrop(200),
                                 transforms.Resize((160,
                                                    160)),
-                            #    torchvision.transforms.ColorJitter(brightness=[1,1.2], contrast=[1,1.5], saturation=0, hue=0),
-                            #    transforms.Grayscale(num_output_channels=1),
                                 transforms.RandomAffine(degrees=0,translate=(0.05,0.1)),
-                                #random_noising,
                                 transforms.ToTensor(),
                                 random_noise(),
                                 illumination_change(),
-                            #    transforms.Normalize(mean=[0.5],
-                            #    std=[0.5])
+
                                 ])
 
-"""
-train_loader = torch.utils.data.DataLoader(datasets.ImageFolder(os.path.join(data_dir, "train"),
-               transform=transform), batch_size=args.batch_size,
-                                           shuffle=True, num_workers=4)
-
-valid_loader = torch.utils.data.DataLoader(datasets.ImageFolder(os.path.join(data_dir, "val"),
-               transform=transform), batch_size=args.batch_size,
-                                           shuffle=False, num_workers=4)
-"""
 dataset_train0=datasets.ImageFolder(os.path.join(data_dir, "Set0"),transform=transform)
 dataset_train1=datasets.ImageFolder(os.path.join(data_dir, "Set1"),transform=transform)
 dataset_train2=datasets.ImageFolder(os.path.join(data_dir, "Set2"),transform=transform)
@@ -86,12 +65,7 @@ dataset_train4=datasets.ImageFolder(os.path.join(data_dir, "Set4"),transform=tra
 dataset_train5=datasets.ImageFolder(os.path.join(data_dir, "Set5"),transform=transform)
 dataset_train6=datasets.ImageFolder(os.path.join(data_dir, "Set6"),transform=transform)
 dataset_train7=datasets.ImageFolder(os.path.join(data_dir, "Set7"),transform=transform)
-#dataset_train8=datasets.ImageFolder(os.path.join(data_dir, "Set8"),transform=transform)
-
 dataset_train8=datasets.ImageFolder(os.path.join(data_dir, "Set8"),transform=transform)
-
-
-
 
 
 
@@ -100,7 +74,6 @@ print(device)
 
 
 
-#class_names = dataset_train.classes
 
 
 def imshow(inp, title=None):
@@ -130,31 +103,24 @@ imshow(out)#, title=[class_names[x] for x in classes][0:6])
 def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
     since = time.time()
 
-    #best_model_wts = copy.deepcopy(model.state_dict())
+   
     my_file=open(plot_file, "a")
 
 
     pbar=tqdm(range(checkp_epoch,num_epochs))
     for epoch in pbar:
-        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        #print('-' * 10)
-
-        # Each epoch has a training and validation phase
-        model.train()  # Set model to training mode
+  
+        model.train()  
 
         running_loss = 0.0
         running_corrects = 0
 
-        # Iterate over data.
         for inputs, labels in train_loader:
             inputs = inputs.to(device)
             labels = labels.to(device)
 
-            # zero the parameter gradients
             optimizer.zero_grad()
 
-            # forward
-            # track history if only in train
             with torch.set_grad_enabled(True):
                 outputs = model(inputs)
                 _, preds = torch.max(outputs, 1)
@@ -164,16 +130,13 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 loss.backward()
                 optimizer.step()
 
-            # statistics
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
         train_loss = running_loss / train_set_size
         train_acc = running_corrects.double() / train_set_size
 
-            #print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-            #    phase, epoch_loss, epoch_acc))
-        model.eval()   # Set model to evaluate mode
+        model.eval()   
 
         running_loss = 0.0
         running_corrects = 0
@@ -183,14 +146,11 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
-                # forward
-                # track history if only in train
                 with torch.set_grad_enabled(False):
                     outputs = model(inputs)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
-                # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
@@ -213,14 +173,9 @@ def train_model(model, criterion, optimizer, num_epochs=25,checkp_epoch=0):
         }
         df = pd.DataFrame(data,index=[0])#index=[0] denmezse hata veriyor
         df.to_csv(my_file, header=False,index=False)
-        #print()
+        
         pbar.set_description("train acc {:.3} loss {:.4} val acc {:.3} loss {:.4}".format(train_acc,train_loss,val_acc,val_loss))
     time_elapsed = time.time() - since
-    #print('Training complete in {:.0f}m {:.0f}s'.format(
-    #    time_elapsed // 60, time_elapsed % 60))
-
-
-    # load best model weights
 
     return model,val_acc,train_acc
 
