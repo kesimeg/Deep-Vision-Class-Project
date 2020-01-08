@@ -1,3 +1,8 @@
+"""
+This code trains on dataset generated with dataset creator code.
+This code does 9-fold cross validation on the dataset and writes the accuracy and loss values in to cvs file.
+Resnet18 model is used
+"""
 from __future__ import print_function, division
 
 import torch
@@ -15,21 +20,7 @@ import torch.nn.functional as F
 import pandas as pd
 from tqdm import tqdm
 from datetime  import datetime
-"""
-def __init__(self):
-        super(EncoderCNN, self).__init__()
-        self.vgg = models.vgg16()
-        self.vgg.load_state_dict(torch.load(vgg_checkpoint))
-        self.vgg.features = nn.Sequential(
-            *(self.vgg.features[i] for i in range(30))
 
-    def forward(self, images):
-        return self.vgg.feature(images)
-"""
-#plt.ion()
-
-
-#data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three_augmented'
 data_dir = '../Processed_data/Olulu_Casia_one_subject_last_three'
 
 
@@ -55,30 +46,16 @@ class illumination_change(object):
         return image/div
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                #transforms.RandomAffine(0,scale=(1.3,2)),
-                                #transforms.CenterCrop(200),
                                 transforms.Resize((224,
                                                    224)),
-                            #    torchvision.transforms.ColorJitter(brightness=[1,1.2], contrast=[1,1.5], saturation=0, hue=0),
-                            #    transforms.Grayscale(num_output_channels=1),
                                 transforms.RandomAffine(degrees=0,translate=(0.05,0.1)),
-                                #random_noising,
                                 transforms.ToTensor(),
                                 random_noise(),
                                 illumination_change(),
-                            #    transforms.Normalize(mean=[0.5],
-                            #    std=[0.5])
                                 ])
 
-"""
-train_loader = torch.utils.data.DataLoader(datasets.ImageFolder(os.path.join(data_dir, "train"),
-               transform=transform), batch_size=args.batch_size,
-                                           shuffle=True, num_workers=4)
 
-valid_loader = torch.utils.data.DataLoader(datasets.ImageFolder(os.path.join(data_dir, "val"),
-               transform=transform), batch_size=args.batch_size,
-                                           shuffle=False, num_workers=4)
-"""
+
 dataset_train0=datasets.ImageFolder(os.path.join(data_dir, "Set0"),transform=transform)
 dataset_train1=datasets.ImageFolder(os.path.join(data_dir, "Set1"),transform=transform)
 dataset_train2=datasets.ImageFolder(os.path.join(data_dir, "Set2"),transform=transform)
@@ -87,8 +64,6 @@ dataset_train4=datasets.ImageFolder(os.path.join(data_dir, "Set4"),transform=tra
 dataset_train5=datasets.ImageFolder(os.path.join(data_dir, "Set5"),transform=transform)
 dataset_train6=datasets.ImageFolder(os.path.join(data_dir, "Set6"),transform=transform)
 dataset_train7=datasets.ImageFolder(os.path.join(data_dir, "Set7"),transform=transform)
-#dataset_train8=datasets.ImageFolder(os.path.join(data_dir, "Set8"),transform=transform)
-
 dataset_train8=datasets.ImageFolder(os.path.join(data_dir, "Set8"),transform=transform)
 
 
@@ -101,7 +76,7 @@ print(device)
 
 
 
-#class_names = dataset_train.classes
+
 
 
 def imshow(inp, title=None):
@@ -139,7 +114,9 @@ class Net(nn.Module):
 
         resnet_firstlayer=list(models.resnet18(pretrained = True).children())[0] #load just the first conv layer
         resnet=torch.nn.Sequential(*(list(models.resnet18(pretrained = True).children())[1:-2])) #load upto the classification layers except first conv layer and pool
+       
         """
+        #This part can be used to turn the inputs in to grayscale, first layers channels are addded to each other
         w1=resnet_firstlayer.state_dict()['weight'][:,0,:,:]
         w2=resnet_firstlayer.state_dict()['weight'][:,1,:,:]
         w3=resnet_firstlayer.state_dict()['weight'][:,2,:,:]
@@ -154,6 +131,7 @@ class Net(nn.Module):
 
         self.first_convlayer=first_conv #the first layer is 1 channel (Grayscale) conv  layer
         """
+        
         self.first_convlayer=resnet_firstlayer
         self.resnet =nn.Sequential(resnet)
 
