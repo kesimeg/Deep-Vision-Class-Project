@@ -10,5 +10,3 @@ For facial landmark data loading and transform functions Pytorch tutorial codes 
 
 Saliencymap code uses resnet model and generates a saliency map. 
 
-VAE and GAN directory contains codes for VAE and GAN. VAE codes are taken from:https://github.com/dpernes/vae and GAN codes are based on Pytorch's DCGAN tutorial:https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html 
-Model architectures in GAN and VAE are different from these sources.
